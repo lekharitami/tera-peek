@@ -16,6 +16,7 @@ export default function TeraPeek() {
   const [showPlayer, setShowPlayer] = useState(false);
   const [freshLink, setFreshLink] = useState("");
   const [playerLoading, setPlayerLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const inputRef = useRef(null);
   const helpDropdownRef = useRef(null);
 
@@ -99,6 +100,18 @@ export default function TeraPeek() {
     }
   };
 
+  const getFreshProxiedLink = async () => {
+    try {
+      const apiUrl = `https://tera-core.vercel.app/api?url=https://terabox.com/s/${encodeURIComponent(data.share_id)}`;
+      const res = await fetch(apiUrl);
+      const json = await res.json();
+      const freshDl = json?.files?.[0]?.download_link;
+      return PROXY + encodeURIComponent(freshDl || data.rawlink);
+    } catch {
+      return PROXY + encodeURIComponent(data.rawlink);
+    }
+  };
+
   const handlePlay = async () => {
     if (showPlayer) {
       setShowPlayer(false);
@@ -107,20 +120,30 @@ export default function TeraPeek() {
     }
     setPlayerLoading(true);
     try {
-      const apiUrl = `https://tera-core.vercel.app/api?url=https://terabox.com/s/${encodeURIComponent(data.share_id)}`;
-      const res = await fetch(apiUrl);
-      const json = await res.json();
-      const freshDl = json?.files?.[0]?.download_link;
-      if (freshDl) {
-        setFreshLink(PROXY + encodeURIComponent(freshDl));
-      } else {
-        setFreshLink(PROXY + encodeURIComponent(data.rawlink));
-      }
-    } catch {
-      setFreshLink(PROXY + encodeURIComponent(data.rawlink));
+      const proxied = await getFreshProxiedLink();
+      setFreshLink(proxied);
     } finally {
       setPlayerLoading(false);
       setShowPlayer(true);
+    }
+  };
+
+  // ✅ NEW: Download via proxy so the browser can actually save the file
+  const handleDownload = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const proxied = await getFreshProxiedLink();
+      const a = document.createElement("a");
+      a.href = proxied;
+      a.download = data.file_name || "terabox_video";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err) {
+      setError("Download failed. Try using Open Link instead.");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -330,6 +353,7 @@ export default function TeraPeek() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
+                  {/* Play / Hide Player */}
                   <button
                     onClick={handlePlay}
                     disabled={playerLoading}
@@ -338,8 +362,10 @@ export default function TeraPeek() {
                     {playerLoading ? <Loader2 className="animate-spin" size={18} /> : <Play size={18} />}
                     <span className="font-medium">{playerLoading ? "Loading…" : showPlayer ? "Hide Player" : "Play Video"}</span>
                   </button>
+
+                  {/* Open Link — opens proxied URL in new tab so it can actually play */}
                   
-                    href={data.directlink}
+                    href={freshLink || (PROXY + encodeURIComponent(data.rawlink))}
                     target="_blank"
                     rel="noreferrer"
                     className="group inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 transition-all duration-200 hover:scale-[1.02] w-full sm:w-auto"
@@ -347,16 +373,16 @@ export default function TeraPeek() {
                     <Link2 size={18} className="text-indigo-600 dark:text-indigo-400" />
                     <span className="font-medium text-indigo-700 dark:text-indigo-300">Open Link</span>
                   </a>
-                  
-                    href={data.directlink}
-                    target="_blank"
-                    rel="noreferrer"
-                    download={data.file_name}
-                    className="group inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transition-all duration-200 hover:scale-[1.02] text-white w-full sm:w-auto shadow-md"
+
+                  {/* ✅ Download via proxy */}
+                  <button
+                    onClick={handleDownload}
+                    disabled={downloading}
+                    className="group inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transition-all duration-200 hover:scale-[1.02] text-white w-full sm:w-auto shadow-md disabled:opacity-60"
                   >
-                    <DownloadCloud size={18} />
-                    <span className="font-medium">Download</span>
-                  </a>
+                    {downloading ? <Loader2 className="animate-spin" size={18} /> : <DownloadCloud size={18} />}
+                    <span className="font-medium">{downloading ? "Preparing…" : "Download"}</span>
+                  </button>
                 </div>
 
                 <div className="p-4 sm:p-5 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm w-full overflow-x-auto">
