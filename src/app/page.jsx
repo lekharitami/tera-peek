@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Copy, Link2, DownloadCloud, Search, Loader2, AlertTriangle, Menu, HelpCircle, Github, X, ChevronDown, Play } from "lucide-react";
+import { Link2, DownloadCloud, Search, Loader2, AlertTriangle, Menu, HelpCircle, Github, X, ChevronDown, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const PROXY = "https://cool-rain-9329.lekharitami.workers.dev/?url=";
@@ -56,10 +56,10 @@ export default function TeraPeek() {
     setFreshLink("");
 
     const trimmed = videoId.trim();
-    if (!trimmed) { setError("❌ Please enter a video ID or share link."); return; }
+    if (!trimmed) { setError("Please enter a video ID or share link."); return; }
 
     const id = extractId(trimmed);
-    if (!id) { setError("⚠️ Could not extract a valid ID from the input."); return; }
+    if (!id) { setError("Could not extract a valid ID from the input."); return; }
     if (id && id !== trimmed) setVideoId(id);
 
     const apiUrl = `https://tera-core.vercel.app/api?url=https://terabox.com/s/${encodeURIComponent(id)}`;
@@ -93,7 +93,7 @@ export default function TeraPeek() {
         share_id: id,
       });
     } catch (err) {
-      setError(err.message || "❌ Failed to fetch metadata. Please try again.");
+      setError(err.message || "Failed to fetch metadata. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -105,8 +105,6 @@ export default function TeraPeek() {
       setFreshLink("");
       return;
     }
-
-    // Re-fetch a fresh link to avoid expiry
     setPlayerLoading(true);
     try {
       const apiUrl = `https://tera-core.vercel.app/api?url=https://terabox.com/s/${encodeURIComponent(data.share_id)}`;
@@ -130,7 +128,7 @@ export default function TeraPeek() {
     if (!bytes) return "-";
     if (bytes === 0) return "0 B";
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return (bytes / Math.pow(1024, i)).toFixed(i ? 2 : 0) + " " + ["B","KB","MB","GB","TB"][i];
+    return (bytes / Math.pow(1024, i)).toFixed(i ? 2 : 0) + " " + ["B", "KB", "MB", "GB", "TB"][i];
   };
 
   useEffect(() => {
@@ -154,7 +152,6 @@ export default function TeraPeek() {
     >
       <div className="max-w-4xl mx-auto w-full">
 
-        {/* Header */}
         <header className="flex flex-wrap items-start justify-between mb-8 gap-4">
           <div className="flex-1 min-w-[200px]">
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-400">
@@ -165,7 +162,6 @@ export default function TeraPeek() {
             </p>
           </div>
 
-          {/* Desktop menu */}
           <nav className="hidden md:flex gap-3 shrink-0 items-start">
             <div className="relative" ref={helpDropdownRef}>
               <button
@@ -187,22 +183,11 @@ export default function TeraPeek() {
                     <div className="p-4">
                       <h3 className="font-semibold text-sm mb-3">Quick Tips</h3>
                       <ul className="space-y-2 text-xs text-neutral-600 dark:text-neutral-300">
-                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Paste any Terabox/Terashare share link - the app will auto-extract the ID</span></li>
-                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Works with terabox.com, terasharelink.com, 1024terabox.com, and similar domains</span></li>
-                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Click Inspect then Play Video to stream directly in browser</span></li>
+                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Paste any Terabox/Terashare share link</span></li>
+                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Works with terabox.com, terasharelink.com, 1024terabox.com</span></li>
+                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Click Inspect then Play Video to stream in browser</span></li>
                         <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Use Download to save the file</span></li>
                       </ul>
-                      <h3 className="font-semibold text-sm mt-4 mb-3">FAQ</h3>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs font-medium text-neutral-700 dark:text-neutral-200">Q: Is this tool free?</p>
-                          <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">A: Yes, completely free.</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-neutral-700 dark:text-neutral-200">Q: Do I need an account?</p>
-                          <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">A: No, just paste and go.</p>
-                        </div>
-                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -218,7 +203,6 @@ export default function TeraPeek() {
             </a>
           </nav>
 
-          {/* Mobile menu */}
           <div className="relative md:hidden">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -253,7 +237,6 @@ export default function TeraPeek() {
 
         <main className="flex flex-col gap-6 md:gap-8">
 
-          {/* Input card */}
           <motion.section
             layout
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -303,7 +286,6 @@ export default function TeraPeek() {
             <p className="mt-4 text-xs text-neutral-500 leading-relaxed">Paste a full Terabox/Terashare share link or just the ID — the app will auto-extract it.</p>
           </motion.section>
 
-          {/* Result panel */}
           <motion.section
             layout
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -318,7 +300,6 @@ export default function TeraPeek() {
             ) : (
               <div className="space-y-6">
 
-                {/* Thumbnail or Video Player */}
                 <div className="rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm w-full aspect-video max-h-[360px]">
                   {showPlayer && freshLink ? (
                     <video
@@ -348,7 +329,6 @@ export default function TeraPeek() {
                   )}
                 </div>
 
-                {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={handlePlay}
@@ -379,7 +359,6 @@ export default function TeraPeek() {
                   </a>
                 </div>
 
-                {/* Metadata */}
                 <div className="p-4 sm:p-5 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm w-full overflow-x-auto">
                   <h3 className="text-lg font-semibold">Metadata</h3>
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -438,15 +417,15 @@ export default function TeraPeek() {
               <li>Click <strong>Inspect</strong> to fetch metadata.</li>
               <li>Click <strong>Play Video</strong> to stream directly in browser.</li>
             </ol>
-            <p className="mt-3">⚠️ This app uses a public API endpoint — avoid pasting sensitive links.</p>
+            <p className="mt-3">This app uses a public API — avoid pasting sensitive links.</p>
           </div>
           <div className="mb-6">
             <h4 className="font-semibold">Features</h4>
             <ul className="mt-2 list-disc pl-5 space-y-1">
-              <li>Stream video directly in browser with Play Video button</li>
-              <li>Extracts detailed file metadata including size, path, and file ID</li>
-              <li>Supports multiple thumbnail sizes</li>
-              <li>Provides direct download links</li>
+              <li>Stream video directly in browser</li>
+              <li>Detailed file metadata</li>
+              <li>Multiple thumbnail sizes</li>
+              <li>Direct download links</li>
               <li>Works with terabox.com, 1024terabox.com, and similar domains</li>
             </ul>
           </div>
