@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Copy, Link2, DownloadCloud, Search, Loader2, AlertTriangle, Menu, HelpCircle, Github, X, ChevronDown, Twitter, Share2 } from "lucide-react";
+import { Copy, Link2, DownloadCloud, Search, Loader2, AlertTriangle, Menu, HelpCircle, Github, X, ChevronDown, Twitter, Share2, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const PROXY = "https://cool-rain-9329.lekharitami.workers.dev/?url=";
 
 export default function TeraPeek() {
   const [videoId, setVideoId] = useState("");
@@ -12,15 +14,14 @@ export default function TeraPeek() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [helpDropdownOpen, setHelpDropdownOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [showPlayer, setShowPlayer] = useState(false);
   const inputRef = useRef(null);
   const helpDropdownRef = useRef(null);
 
-  // Set isClient to true after component mounts
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Close help dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (helpDropdownRef.current && !helpDropdownRef.current.contains(event.target)) {
@@ -60,6 +61,7 @@ export default function TeraPeek() {
   const fetchMeta = async () => {
     setError("");
     setData(null);
+    setShowPlayer(false);
 
     const trimmed = videoId.trim();
     if (!trimmed) {
@@ -74,9 +76,7 @@ export default function TeraPeek() {
     }
     if (id && id !== trimmed) setVideoId(id);
 
-    const apiUrl = `https://tera-core.vercel.app/api?url=https://terabox.com/s/${encodeURIComponent(
-      id
-    )}`;
+    const apiUrl = `https://tera-core.vercel.app/api?url=https://terabox.com/s/${encodeURIComponent(id)}`;
 
     try {
       setLoading(true);
@@ -88,9 +88,7 @@ export default function TeraPeek() {
       if (json.status !== "success") throw new Error(json.message || "API request failed.");
       if (!json.files || !json.files.length) throw new Error("No files found in response.");
 
-      // Transform the new API response to match the expected format
       const fileData = json.files[0];
-      // Use the highest quality thumbnail (850x580) if available
       const highestQualityThumb = fileData.thumbnails ? fileData.thumbnails['850x580'] || Object.values(fileData.thumbnails)[0] : null;
       const transformedData = {
         file_name: fileData.filename,
@@ -98,6 +96,7 @@ export default function TeraPeek() {
         sizebytes: parseInt(fileData.size_bytes) || 0,
         thumb: highestQualityThumb,
         directlink: fileData.download_link,
+        streamlink: PROXY + encodeURIComponent(fileData.download_link),
         fs_id: fileData.fs_id,
         is_directory: fileData.is_directory,
         path: fileData.path,
@@ -138,8 +137,6 @@ export default function TeraPeek() {
     return (bytes / Math.pow(1024, i)).toFixed(i ? 2 : 0) + " " + sizes[i];
   };
 
-
-  // Auto-focus input on page load
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -149,6 +146,7 @@ export default function TeraPeek() {
   const clearInput = () => {
     setVideoId("");
     setError("");
+    setShowPlayer(false);
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -173,7 +171,7 @@ export default function TeraPeek() {
             </p>
           </div>
 
-          {/* Desktop menu with pill buttons */}
+          {/* Desktop menu */}
           <nav className="hidden md:flex gap-3 shrink-0 items-start">
             <div className="relative" ref={helpDropdownRef}>
               <button
@@ -195,40 +193,20 @@ export default function TeraPeek() {
                     <div className="p-4">
                       <h3 className="font-semibold text-sm mb-3">Quick Tips</h3>
                       <ul className="space-y-2 text-xs text-neutral-600 dark:text-neutral-300">
-                        <li className="flex items-start gap-2">
-                          <span className="text-indigo-600">•</span>
-                          <span>Paste any Terabox/Terashare share link - the app will auto-extract the ID</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-indigo-600">•</span>
-                          <span>Works with terabox.com, terasharelink.com, 1024terabox.com, and similar domains</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-indigo-600">•</span>
-                          <span>Click "Inspect" to fetch metadata and preview the video</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-indigo-600">•</span>
-                          <span>Use "Open Link" to view in browser or "Download" to save</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-indigo-600">•</span>
-                          <span>Supports multiple thumbnail sizes and detailed file information</span>
-                        </li>
+                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Paste any Terabox/Terashare share link - the app will auto-extract the ID</span></li>
+                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Works with terabox.com, terasharelink.com, 1024terabox.com, and similar domains</span></li>
+                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Click "Inspect" to fetch metadata and preview the video</span></li>
+                        <li className="flex items-start gap-2"><span className="text-indigo-600">•</span><span>Use "Play" to stream directly in browser or "Download" to save</span></li>
                       </ul>
                       <h3 className="font-semibold text-sm mt-4 mb-3">FAQ</h3>
                       <div className="space-y-3">
                         <div>
                           <p className="text-xs font-medium text-neutral-700 dark:text-neutral-200">Q: Is this tool free?</p>
-                          <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">A: Yes, it's completely free to use.</p>
+                          <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">A: Yes, completely free.</p>
                         </div>
                         <div>
-                          <p className="text-xs font-medium text-neutral-700 dark:text-neutral-200">Q: Do I need to create an account?</p>
-                          <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">A: No, just paste the link and start using it immediately.</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-neutral-700 dark:text-neutral-200">Q: Are downloads unlimited?</p>
-                          <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">A: Yes, there are no usage restrictions.</p>
+                          <p className="text-xs font-medium text-neutral-700 dark:text-neutral-200">Q: Do I need an account?</p>
+                          <p className="text-xs text-neutral-600 dark:text-neutral-300 mt-1">A: No, just paste and go.</p>
                         </div>
                       </div>
                     </div>
@@ -253,7 +231,6 @@ export default function TeraPeek() {
             <AnimatePresence>
               {menuOpen && (
                 <>
-                  {/*menu dark overlay */}
                   <motion.div
                     className="fixed inset-0 bg-black/40 z-40"
                     initial={{ opacity: 0 }}
@@ -262,7 +239,6 @@ export default function TeraPeek() {
                     transition={{ duration: 0.2 }}
                     onClick={() => setMenuOpen(false)}
                   />
-                  {/*menu content */}
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -306,7 +282,7 @@ export default function TeraPeek() {
                 {videoId && (
                   <button
                     onClick={clearInput}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all duration-200 hover:scale-110 hover:shadow-sm"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-lg text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-all duration-200 hover:scale-110"
                     aria-label="Clear input"
                   >
                     <X size={18} />
@@ -317,9 +293,8 @@ export default function TeraPeek() {
                 onClick={fetchMeta}
                 disabled={loading}
                 className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition-all duration-200 hover:shadow-lg hover:scale-105 disabled:opacity-50 w-full sm:w-auto"
-                aria-label="Fetch metadata"
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} className="text-indigo-200" />} {" "}
+                {loading ? <Loader2 className="animate-spin" size={18} /> : <Search size={18} className="text-indigo-200" />}
                 <span className="font-medium">{loading ? "Checking..." : "Inspect"}</span>
               </button>
             </div>
@@ -337,7 +312,7 @@ export default function TeraPeek() {
               )}
             </AnimatePresence>
 
-            <p className="mt-4 text-xs text-neutral-500 leading-relaxed">Paste a full Terabox/Terashare share link or just the ID — the app will auto-extract it. This tool uses the enhanced tera-core API with detailed file information and multiple thumbnail sizes.</p>
+            <p className="mt-4 text-xs text-neutral-500 leading-relaxed">Paste a full Terabox/Terashare share link or just the ID — the app will auto-extract it.</p>
           </motion.section>
 
           {/* Result panel */}
@@ -361,9 +336,19 @@ export default function TeraPeek() {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Thumbnail */}
+                {/* Thumbnail or Video Player */}
                 <div className="rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 shadow-sm w-full aspect-video max-h-[320px]">
-                  {data.thumb ? (
+                  {showPlayer ? (
+                    <video
+                      src={data.streamlink}
+                      controls
+                      autoPlay
+                      className="w-full h-full"
+                      style={{ maxHeight: "320px" }}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : data.thumb ? (
                     <img
                       src={data.thumb}
                       alt={data.file_name}
@@ -378,27 +363,33 @@ export default function TeraPeek() {
 
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <a
+                  <button
+                    onClick={() => setShowPlayer(!showPlayer)}
+                    className="group inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] text-white w-full sm:w-auto shadow-md"
+                  >
+                    <Play size={18} className="text-white" />
+                    <span className="font-medium">{showPlayer ? "Hide Player" : "Play Video"}</span>
+                  </button>
+                  
                     href={data.directlink}
                     target="_blank"
                     rel="noreferrer"
                     className="group inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border-2 border-indigo-500 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] w-full sm:w-auto"
                   >
-                    <Link2 size={18} className="text-indigo-600 group-hover:text-indigo-700 dark:text-indigo-400 dark:group-hover:text-indigo-300" />
-                    <span className="font-medium text-indigo-700 group-hover:text-indigo-800 dark:text-indigo-300 dark:group-hover:text-indigo-200">Open Link</span>
+                    <Link2 size={18} className="text-indigo-600 dark:text-indigo-400" />
+                    <span className="font-medium text-indigo-700 dark:text-indigo-300">Open Link</span>
                   </a>
-                  <a
+                  
                     href={data.directlink}
                     target="_blank"
                     rel="noreferrer"
                     download={data.file_name}
-                    className="group inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] text-white w-full sm:w-auto shadow-md hover:shadow-lg"
+                    className="group inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] text-white w-full sm:w-auto shadow-md"
                   >
                     <DownloadCloud size={18} className="text-white" />
                     <span className="font-medium">Download</span>
                   </a>
                 </div>
-
 
                 {/* Metadata */}
                 <div className="p-4 sm:p-5 bg-neutral-50 dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm w-full overflow-x-auto">
@@ -432,9 +423,7 @@ export default function TeraPeek() {
                       <span className="text-neutral-400">Thumbnail</span>
                       <div className="mt-1">
                         {data.thumb ? (
-                          <a href={data.thumb} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline break-all">
-                            {data.thumb}
-                          </a>
+                          <a href={data.thumb} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline break-all">{data.thumb}</a>
                         ) : (
                           <span className="text-neutral-500">-</span>
                         )}
@@ -453,7 +442,6 @@ export default function TeraPeek() {
         </main>
 
         <footer id="how" className="mt-8 text-sm text-neutral-500 leading-relaxed w-full">
-          {/* How to get the id */}
           <div className="mb-6">
             <h4 className="font-semibold">How to get the id</h4>
             <ol className="mt-2 list-decimal pl-5 space-y-1">
@@ -461,21 +449,18 @@ export default function TeraPeek() {
               <li>The app automatically extracts the id segment after <code className="rounded bg-neutral-100 px-1">/s/</code>.</li>
               <li>Click <strong>Inspect</strong> to fetch metadata.</li>
             </ol>
-            <p className="mt-3">⚠️ This app uses a public API endpoint — avoid pasting sensitive links. For production, consider hosting your own API with server-side protection.</p>
+            <p className="mt-3">⚠️ This app uses a public API endpoint — avoid pasting sensitive links.</p>
           </div>
-
-          {/* Features */}
           <div className="mb-6">
             <h4 className="font-semibold">Features</h4>
             <ul className="mt-2 list-disc pl-5 space-y-1">
               <li>Extracts detailed file metadata including size, path, and file ID</li>
-              <li>Supports multiple thumbnail sizes (60x60, 140x90, 360x270, 850x580)</li>
-              <li>Provides direct download links with expiration handling</li>
-              <li>Shows comprehensive file information and original API response</li>
+              <li>Supports multiple thumbnail sizes</li>
+              <li>Stream video directly in browser with Play Video button</li>
+              <li>Provides direct download links</li>
               <li>Works with terabox.com, 1024terabox.com, and similar domains</li>
             </ul>
           </div>
-  
           <div className="pt-4 border-t border-neutral-200 dark:border-neutral-700 text-center text-xs">
             <p>© 2025 TeraPeek. Made with ❤️ by <a href="https://github.com/saahiyo" target="_blank" rel="noopener noreferrer"><span className="text-indigo-600 hover:underline font-bold">saahiyo</span></a></p>
           </div>
