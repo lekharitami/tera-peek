@@ -128,18 +128,12 @@ export default function TeraPeek() {
     }
   };
 
-  // ✅ NEW: Download via proxy so the browser can actually save the file
   const handleDownload = async () => {
     if (downloading) return;
     setDownloading(true);
     try {
       const proxied = await getFreshProxiedLink();
-      const a = document.createElement("a");
-      a.href = proxied;
-      a.download = data.file_name || "terabox_video";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      window.open(proxied, "_blank");
     } catch (err) {
       setError("Download failed. Try using Open Link instead.");
     } finally {
@@ -353,7 +347,6 @@ export default function TeraPeek() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  {/* Play / Hide Player */}
                   <button
                     onClick={handlePlay}
                     disabled={playerLoading}
@@ -363,7 +356,6 @@ export default function TeraPeek() {
                     <span className="font-medium">{playerLoading ? "Loading…" : showPlayer ? "Hide Player" : "Play Video"}</span>
                   </button>
 
-                  {/* Open Link — opens proxied URL in new tab so it can actually play */}
                   
                     href={freshLink || (PROXY + encodeURIComponent(data.rawlink))}
                     target="_blank"
@@ -374,7 +366,6 @@ export default function TeraPeek() {
                     <span className="font-medium text-indigo-700 dark:text-indigo-300">Open Link</span>
                   </a>
 
-                  {/* ✅ Download via proxy */}
                   <button
                     onClick={handleDownload}
                     disabled={downloading}
